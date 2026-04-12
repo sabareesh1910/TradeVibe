@@ -6,31 +6,48 @@ workflows:
       node: 20
       java: 17
     scripts:
-      - name: Set working directory and install dependencies
+      - name: Install dependencies
         script: |
           cd tradevibe-complete/tradevibe/app
           npm install
 
-      - name: Download Gradle wrapper
+      - name: Create Gradle wrapper manually
         script: |
-          mkdir -p tradevibe-complete/tradevibe/app/android/gradle/wrapper
-          curl -L -o tradevibe-complete/tradevibe/app/android/gradle/wrapper/gradle-wrapper.jar \
-            https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar
-          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-all.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' \
-            > tradevibe-complete/tradevibe/app/android/gradle/wrapper/gradle-wrapper.properties
-          curl -L -o tradevibe-complete/tradevibe/app/android/gradlew \
-            https://raw.githubusercontent.com/nicklockwood/iRate/master/gradlew
-          chmod +x tradevibe-complete/tradevibe/app/android/gradlew
+          APP=tradevibe-complete/tradevibe/app
+          mkdir -p $APP/android/gradle/wrapper
+
+          # Write gradlew shell script directly
+          cat > $APP/android/gradlew << 'GRADLEW'
+#!/usr/bin/env sh
+APP_HOME="$(cd "$(dirname "$0")" && pwd)"
+CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+JAVA_EXE=java
+exec "$JAVA_EXE" $DEFAULT_JVM_OPTS -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
+GRADLEW
+          chmod +x $APP/android/gradlew
+
+          # Write gradle-wrapper.properties
+          cat > $APP/android/gradle/wrapper/gradle-wrapper.properties << 'EOF'
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-all.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
+
+          # Download the actual gradle-wrapper.jar
+          curl -L -o $APP/android/gradle/wrapper/gradle-wrapper.jar \
+            "https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar" \
+            || curl -L -o $APP/android/gradle/wrapper/gradle-wrapper.jar \
+            "https://search.maven.org/remotecontent?filepath=org/gradle/gradle-wrapper/8.6/gradle-wrapper-8.6.jar"
 
       - name: Build Android APK
         script: |
           export JAVA_HOME=$CM_JAVA_HOME
-          ROOT=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
-          cd $ROOT/android
-          ./gradlew assembleDebug \
-            -Preact.gradle.dir=$ROOT/node_modules/@react-native/gradle-plugin \
-            --no-daemon \
-            --stacktrace
+          APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
+          cd $APP/android
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
     artifacts:
       - tradevibe-complete/tradevibe/app/android/app/build/outputs/apk/debug/*.apk
