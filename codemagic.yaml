@@ -16,14 +16,26 @@ workflows:
           APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
           mkdir -p $APP/android/gradle/wrapper
 
-          # Download gradle-wrapper.jar directly from Maven Central
-          curl -L -o $APP/android/gradle/wrapper/gradle-wrapper.jar \
-            "https://repo1.maven.org/maven2/org/gradle/gradle-wrapper/8.6/gradle-wrapper-8.6.jar"
+          # Download official Gradle 8.6 zip
+          curl -L -o /tmp/gradle.zip \
+            "https://services.gradle.org/distributions/gradle-8.6-bin.zip"
 
-          # Verify jar downloaded correctly
+          # List what is inside to find the jar
+          unzip -l /tmp/gradle.zip | grep "gradle-wrapper"
+
+          # Extract gradle-wrapper.jar from the zip
+          unzip -o /tmp/gradle.zip \
+            "gradle-8.6/lib/gradle-wrapper.jar" \
+            -d /tmp/gradle-extract/
+
+          # Copy to correct location
+          cp /tmp/gradle-extract/gradle-8.6/lib/gradle-wrapper.jar \
+            $APP/android/gradle/wrapper/gradle-wrapper.jar
+
+          # Confirm
           ls -lh $APP/android/gradle/wrapper/gradle-wrapper.jar
-          file $APP/android/gradle/wrapper/gradle-wrapper.jar
 
+          # Write properties
           printf '%s\n' \
             'distributionBase=GRADLE_USER_HOME' \
             'distributionPath=wrapper/dists' \
@@ -34,21 +46,10 @@ workflows:
 
           chmod +x $APP/android/gradlew
 
-      - name: Verify wrapper
-        script: |
-          APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
-          echo "--- gradlew content ---"
-          cat $APP/android/gradlew
-          echo "--- wrapper jar ---"
-          ls -lh $APP/android/gradle/wrapper/
-          echo "--- properties ---"
-          cat $APP/android/gradle/wrapper/gradle-wrapper.properties
-
       - name: Build Android APK
         script: |
           APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
           cd $APP/android
-          java -version
           ./gradlew assembleDebug --no-daemon --stacktrace
 
     artifacts:
