@@ -6,32 +6,31 @@ workflows:
       node: 20
       java: 17
     scripts:
-      - name: Install dependencies
+      - name: Set working directory and install dependencies
         script: |
           cd tradevibe-complete/tradevibe/app
           npm install
 
-      - name: Download Gradle wrapper directly
+      - name: Download Gradle wrapper
         script: |
           mkdir -p tradevibe-complete/tradevibe/app/android/gradle/wrapper
-          curl -o tradevibe-complete/tradevibe/app/android/gradle/wrapper/gradle-wrapper.jar \
-            https://raw.githubusercontent.com/gradle/gradle/v8.3.0/gradle/wrapper/gradle-wrapper.jar
-          cat > tradevibe-complete/tradevibe/app/android/gradle/wrapper/gradle-wrapper.properties << 'EOF'
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.3-all.zip
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          EOF
-          curl -o tradevibe-complete/tradevibe/app/android/gradlew \
-            https://raw.githubusercontent.com/gradle/gradle/v8.3.0/gradlew
+          curl -L -o tradevibe-complete/tradevibe/app/android/gradle/wrapper/gradle-wrapper.jar \
+            https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar
+          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-all.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' \
+            > tradevibe-complete/tradevibe/app/android/gradle/wrapper/gradle-wrapper.properties
+          curl -L -o tradevibe-complete/tradevibe/app/android/gradlew \
+            https://raw.githubusercontent.com/nicklockwood/iRate/master/gradlew
           chmod +x tradevibe-complete/tradevibe/app/android/gradlew
 
       - name: Build Android APK
         script: |
           export JAVA_HOME=$CM_JAVA_HOME
-          cd tradevibe-complete/tradevibe/app/android
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ROOT=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
+          cd $ROOT/android
+          ./gradlew assembleDebug \
+            -Preact.gradle.dir=$ROOT/node_modules/@react-native/gradle-plugin \
+            --no-daemon \
+            --stacktrace
 
     artifacts:
       - tradevibe-complete/tradevibe/app/android/app/build/outputs/apk/debug/*.apk
