@@ -5,16 +5,18 @@ workflows:
     environment:
       node: 20
       java: 17
+
     scripts:
       - name: Install dependencies
         script: |
+          cd tradevibe-complete/tradevibe/app
           npm install
 
       - name: Build Android APK
         script: |
-          cd android
+          cd tradevibe-complete/tradevibe/app/android
           chmod +x gradlew
           ./gradlew assembleDebug
 
     artifacts:
-      - android/app/build/outputs/apk/debug/app-debug.apk
+      - tradevibe-complete/tradevibe/app/android/app/build/outputs/apk/debug/app-debug.apk
