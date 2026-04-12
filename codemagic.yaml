@@ -14,16 +14,24 @@ workflows:
       - name: Generate Gradle wrapper
         script: |
           cd tradevibe-complete/tradevibe/app/android
-          gradle wrapper --gradle-version 8.6
+          gradle wrapper --gradle-version 8.3
 
       - name: Make gradlew executable
         script: |
           chmod +x tradevibe-complete/tradevibe/app/android/gradlew
 
+      - name: Fix gradle-wrapper.properties
+        script: |
+          echo "distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.3-all.zip
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists" > tradevibe-complete/tradevibe/app/android/gradle/wrapper/gradle-wrapper.properties
+
       - name: Build Android APK
         script: |
           cd tradevibe-complete/tradevibe/app/android
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --warning-mode all
 
     artifacts:
       - tradevibe-complete/tradevibe/app/android/app/build/outputs/apk/debug/*.apk
