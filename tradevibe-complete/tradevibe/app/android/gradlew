@@ -1,40 +1,23 @@
-#!/bin/sh
-APP_NAME="Gradle"
-APP_BASE_NAME=`basename "$0"`
-DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
-CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
-exec "$JAVACMD" "$@" -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$APP_ARGS"
-
 #!/usr/bin/env sh
 DIRNAME="$(dirname "$0")"
 APP_HOME="$(cd "$DIRNAME" && pwd -P)"
 APP_NAME="Gradle"
 APP_BASE_NAME="$(basename "$0")"
 DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
-
 set -e
-
 die () {
     echo
     echo "$*"
     echo
     exit 1
 } >&2
-
-warn () {
-    echo "$*"
-} >&2
-
 if [ "$APP_HOME" = "" ] ; then
     APP_HOME="$(pwd -P)"
 fi
-
 CLASSPATH="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
-
 JAVA_EXE=java
 if ! command -v "$JAVA_EXE" > /dev/null 2>&1
 then
-    die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH."
+    die "ERROR: JAVA_HOME is not set and no java command could be found in your PATH."
 fi
-
-exec "$JAVA_EXE" "$DEFAULT_JVM_OPTS" org.gradle.wrapper.GradleWrapperMain "$@"
+exec "$JAVA_EXE" $DEFAULT_JVM_OPTS -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
