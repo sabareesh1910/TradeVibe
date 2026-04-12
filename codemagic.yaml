@@ -16,17 +16,13 @@ workflows:
           APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
           mkdir -p $APP/android/gradle/wrapper
 
-          curl -L \
-            "https://services.gradle.org/distributions/gradle-8.6-bin.zip" \
-            -o /tmp/gradle-8.6-bin.zip
-          unzip -j /tmp/gradle-8.6-bin.zip \
-            "gradle-8.6/lib/plugins/gradle-wrapper-*.jar" \
-            -d /tmp/gradle-jar/ || true
-          unzip -j /tmp/gradle-8.6-bin.zip \
-            "gradle-8.6/lib/gradle-wrapper-*.jar" \
-            -d /tmp/gradle-jar/ || true
-          cp /tmp/gradle-jar/*.jar \
-            $APP/android/gradle/wrapper/gradle-wrapper.jar
+          # Download gradle-wrapper.jar directly from Maven Central
+          curl -L -o $APP/android/gradle/wrapper/gradle-wrapper.jar \
+            "https://repo1.maven.org/maven2/org/gradle/gradle-wrapper/8.6/gradle-wrapper-8.6.jar"
+
+          # Verify jar downloaded correctly
+          ls -lh $APP/android/gradle/wrapper/gradle-wrapper.jar
+          file $APP/android/gradle/wrapper/gradle-wrapper.jar
 
           printf '%s\n' \
             'distributionBase=GRADLE_USER_HOME' \
@@ -37,12 +33,22 @@ workflows:
             > $APP/android/gradle/wrapper/gradle-wrapper.properties
 
           chmod +x $APP/android/gradlew
-          ls -la $APP/android/gradle/wrapper/
+
+      - name: Verify wrapper
+        script: |
+          APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
+          echo "--- gradlew content ---"
+          cat $APP/android/gradlew
+          echo "--- wrapper jar ---"
+          ls -lh $APP/android/gradle/wrapper/
+          echo "--- properties ---"
+          cat $APP/android/gradle/wrapper/gradle-wrapper.properties
 
       - name: Build Android APK
         script: |
           APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
           cd $APP/android
+          java -version
           ./gradlew assembleDebug --no-daemon --stacktrace
 
     artifacts:
