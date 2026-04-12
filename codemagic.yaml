@@ -2,11 +2,12 @@ workflows:
 android-debug:
 name: TradeVibe Android Debug
 max_build_duration: 60
-environment:
-node: 20
-java: 17
 
 ```
+environment:
+  node: 20
+  java: 17
+
 scripts:
   - name: Install dependencies
     script: |
@@ -17,7 +18,7 @@ scripts:
     script: |
       cd tradevibe-complete/tradevibe/app/android
       ls
-      chmod +x ./gradlew
+      chmod +x gradlew
       ./gradlew assembleDebug
 
 artifacts:
