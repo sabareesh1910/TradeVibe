@@ -11,31 +11,9 @@ workflows:
           cd tradevibe-complete/tradevibe/app
           npm install
 
-      - name: Setup Gradle wrapper
+      - name: Fix gradle-wrapper.properties
         script: |
           APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
-          mkdir -p $APP/android/gradle/wrapper
-
-          # Download official Gradle 8.6 zip
-          curl -L -o /tmp/gradle.zip \
-            "https://services.gradle.org/distributions/gradle-8.6-bin.zip"
-
-          # List what is inside to find the jar
-          unzip -l /tmp/gradle.zip | grep "gradle-wrapper"
-
-          # Extract gradle-wrapper.jar from the zip
-          unzip -o /tmp/gradle.zip \
-            "gradle-8.6/lib/gradle-wrapper.jar" \
-            -d /tmp/gradle-extract/
-
-          # Copy to correct location
-          cp /tmp/gradle-extract/gradle-8.6/lib/gradle-wrapper.jar \
-            $APP/android/gradle/wrapper/gradle-wrapper.jar
-
-          # Confirm
-          ls -lh $APP/android/gradle/wrapper/gradle-wrapper.jar
-
-          # Write properties
           printf '%s\n' \
             'distributionBase=GRADLE_USER_HOME' \
             'distributionPath=wrapper/dists' \
@@ -44,13 +22,20 @@ workflows:
             'zipStorePath=wrapper/dists' \
             > $APP/android/gradle/wrapper/gradle-wrapper.properties
 
-          chmod +x $APP/android/gradlew
+      - name: Install Gradle 8.6
+        script: |
+          curl -L https://services.gradle.org/distributions/gradle-8.6-bin.zip \
+            -o /tmp/gradle-8.6-bin.zip
+          unzip -q /tmp/gradle-8.6-bin.zip -d /tmp/
+          export PATH=$PATH:/tmp/gradle-8.6/bin
+          gradle --version
 
       - name: Build Android APK
         script: |
+          export PATH=$PATH:/tmp/gradle-8.6/bin
           APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
           cd $APP/android
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          gradle assembleDebug --no-daemon --stacktrace
 
     artifacts:
       - tradevibe-complete/tradevibe/app/android/app/build/outputs/apk/debug/*.apk
