@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "436549482618",
+    "project_id": "tradevibe-44c08",
+    "storage_bucket": "tradevibe-44c08.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:436549482618:android:b53228676e64f8aa3fa3c3",
+        "android_client_info": {
+          "package_name": "com.tradevibe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDF-Sgzrdb8sVcXzHH_ZsDHzLKCzpS5r5Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
