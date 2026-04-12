@@ -11,15 +11,33 @@ workflows:
           cd tradevibe-complete/tradevibe/app
           npm install
 
-      - name: Setup Gradle wrapper jar
+      - name: Setup Gradle wrapper
         script: |
           APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
           mkdir -p $APP/android/gradle/wrapper
-          curl -L -o $APP/android/gradle/wrapper/gradle-wrapper.jar \
-            "https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar"
-          printf "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-all.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n" \
+
+          curl -L \
+            "https://services.gradle.org/distributions/gradle-8.6-bin.zip" \
+            -o /tmp/gradle-8.6-bin.zip
+          unzip -j /tmp/gradle-8.6-bin.zip \
+            "gradle-8.6/lib/plugins/gradle-wrapper-*.jar" \
+            -d /tmp/gradle-jar/ || true
+          unzip -j /tmp/gradle-8.6-bin.zip \
+            "gradle-8.6/lib/gradle-wrapper-*.jar" \
+            -d /tmp/gradle-jar/ || true
+          cp /tmp/gradle-jar/*.jar \
+            $APP/android/gradle/wrapper/gradle-wrapper.jar
+
+          printf '%s\n' \
+            'distributionBase=GRADLE_USER_HOME' \
+            'distributionPath=wrapper/dists' \
+            'distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-all.zip' \
+            'zipStoreBase=GRADLE_USER_HOME' \
+            'zipStorePath=wrapper/dists' \
             > $APP/android/gradle/wrapper/gradle-wrapper.properties
+
           chmod +x $APP/android/gradlew
+          ls -la $APP/android/gradle/wrapper/
 
       - name: Build Android APK
         script: |
