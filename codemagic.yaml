@@ -11,24 +11,14 @@ workflows:
           cd tradevibe-complete/tradevibe/app
           npm install
 
-      - name: Create Gradle wrapper
+      - name: Setup Gradle wrapper jar
         script: |
-          APP=tradevibe-complete/tradevibe/app
+          APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
           mkdir -p $APP/android/gradle/wrapper
-
           curl -L -o $APP/android/gradle/wrapper/gradle-wrapper.jar \
             "https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar"
-
-          cat > $APP/android/gradle/wrapper/gradle-wrapper.properties << EOF
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-all.zip
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          EOF
-
-          wget -O $APP/android/gradlew \
-            "https://raw.githubusercontent.com/ReactiveX/RxAndroid/3.x/gradlew"
+          printf "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-all.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n" \
+            > $APP/android/gradle/wrapper/gradle-wrapper.properties
           chmod +x $APP/android/gradlew
 
       - name: Build Android APK
