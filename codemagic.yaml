@@ -27,15 +27,19 @@ workflows:
           curl -L https://services.gradle.org/distributions/gradle-8.6-bin.zip \
             -o /tmp/gradle-8.6-bin.zip
           unzip -q /tmp/gradle-8.6-bin.zip -d /tmp/
-          export PATH=$PATH:/tmp/gradle-8.6/bin
+          export PATH=/tmp/gradle-8.6/bin:$PATH
           gradle --version
 
       - name: Build Android APK
         script: |
-          export PATH=$PATH:/tmp/gradle-8.6/bin
+          export PATH=/tmp/gradle-8.6/bin:$PATH
           APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
           cd $APP/android
-          gradle assembleDebug --no-daemon --stacktrace
+          gradle assembleDebug \
+            --no-daemon \
+            --stacktrace \
+            --info \
+            2>&1 | head -150
 
     artifacts:
       - tradevibe-complete/tradevibe/app/android/app/build/outputs/apk/debug/*.apk
