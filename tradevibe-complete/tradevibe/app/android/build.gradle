@@ -18,10 +18,6 @@ buildscript {
     }
 }
 
-def nodeModulesDir = new File(rootProject.projectDir.parentFile, "node_modules")
-
-apply plugin: "com.facebook.react.rootproject"
-
 allprojects {
     repositories {
         google()
