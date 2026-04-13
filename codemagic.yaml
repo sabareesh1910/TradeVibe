@@ -2,44 +2,81 @@ workflows:
   android-debug:
     name: TradeVibe Android Debug
     max_build_duration: 60
+    instance_type: mac_mini_m2
     environment:
       node: 20
       java: 17
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+        - ~/.gradle/wrapper
+        - tradevibe-complete/tradevibe/app/node_modules
     scripts:
       - name: Install dependencies
         script: |
           cd tradevibe-complete/tradevibe/app
           npm install
 
-      - name: Fix gradle-wrapper.properties
+      - name: Set up local.properties
         script: |
-          APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
-          printf '%s\n' \
-            'distributionBase=GRADLE_USER_HOME' \
-            'distributionPath=wrapper/dists' \
-            'distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-all.zip' \
-            'zipStoreBase=GRADLE_USER_HOME' \
-            'zipStorePath=wrapper/dists' \
-            > $APP/android/gradle/wrapper/gradle-wrapper.properties
+          echo "sdk.dir=$ANDROID_SDK_ROOT" \
+            > tradevibe-complete/tradevibe/app/android/local.properties
 
-      - name: Install Gradle 8.6
+      - name: Fix settings.gradle
         script: |
-          curl -L https://services.gradle.org/distributions/gradle-8.6-bin.zip \
-            -o /tmp/gradle-8.6-bin.zip
-          unzip -q /tmp/gradle-8.6-bin.zip -d /tmp/
-          export PATH=/tmp/gradle-8.6/bin:$PATH
-          gradle --version
+          cat > tradevibe-complete/tradevibe/app/android/settings.gradle << 'EOF'
+          pluginManagement {
+              includeBuild("../node_modules/@react-native/gradle-plugin")
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          rootProject.name = 'TradeVibe'
+          apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
+          applyNativeModulesSettingsGradle(settings)
+          include ':app'
+          EOF
+
+      - name: Fix build.gradle
+        script: |
+          cat > tradevibe-complete/tradevibe/app/android/build.gradle << 'EOF'
+          buildscript {
+              ext {
+                  buildToolsVersion = "34.0.0"
+                  minSdkVersion = 24
+                  compileSdkVersion = 34
+                  targetSdkVersion = 34
+                  ndkVersion = "26.1.10909125"
+                  kotlinVersion = "1.9.22"
+              }
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath("com.android.tools.build:gradle:8.3.0")
+                  classpath("com.google.gms:google-services:4.4.1")
+                  classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+              }
+          }
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+                  maven { url "$rootDir/../node_modules/react-native/android" }
+                  maven { url "$rootDir/../node_modules/jsc-android/dist" }
+                  maven { url "https://www.jitpack.io" }
+              }
+          }
+          EOF
 
       - name: Build Android APK
         script: |
-          export PATH=/tmp/gradle-8.6/bin:$PATH
-          APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
-          cd $APP/android
-          gradle assembleDebug \
-            --no-daemon \
-            --stacktrace \
-            --info \
-            2>&1 | head -150
+          cd tradevibe-complete/tradevibe/app/android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
     artifacts:
-      - tradevibe-complete/tradevibe/app/android/app/build/outputs/apk/debug/*.apk
+      - tradevibe-complete/tradevibe/app/android/app/build/outputs/apk/**/*.apk
