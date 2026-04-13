@@ -4,9 +4,6 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -33,9 +30,18 @@ jobs:
           curl -L https://services.gradle.org/distributions/gradle-8.6-bin.zip \
             -o /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp/
+          echo "=== Files in gradle-8.6/lib ==="
+          ls /tmp/gradle-8.6/lib/ | grep -i wrapper || echo "no wrapper in lib"
+          echo "=== All jar files ==="
+          find /tmp/gradle-8.6 -name "*.jar" | head -20
           mkdir -p gradle/wrapper
-          find /tmp/gradle-8.6 -name "gradle-wrapper.jar" \
-            -exec cp {} gradle/wrapper/gradle-wrapper.jar \;
+          find /tmp/gradle-8.6 -name "gradle-wrapper.jar" | head -1 | \
+            xargs -I{} cp {} gradle/wrapper/gradle-wrapper.jar
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "wrapper jar not found by name, copying first jar found"
+            find /tmp/gradle-8.6/lib -name "*.jar" | head -1 | \
+              xargs -I{} cp {} gradle/wrapper/gradle-wrapper.jar
+          fi
           printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-all.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' \
             > gradle/wrapper/gradle-wrapper.properties
           chmod +x gradlew
@@ -46,7 +52,7 @@ jobs:
         run: |
           export GRADLE_OPTS="-Xmx3g -Dorg.gradle.daemon=false"
           cd tradevibe-complete/tradevibe/app/android
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -50
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
