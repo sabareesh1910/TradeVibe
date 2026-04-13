@@ -24,35 +24,17 @@ jobs:
           cd tradevibe-complete/tradevibe/app
           npm install
 
-      - name: Setup Gradle wrapper
-        run: |
-          cd tradevibe-complete/tradevibe/app/android
-          curl -L https://services.gradle.org/distributions/gradle-8.6-bin.zip \
-            -o /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /tmp/
-          echo "=== Files in gradle-8.6/lib ==="
-          ls /tmp/gradle-8.6/lib/ | grep -i wrapper || echo "no wrapper in lib"
-          echo "=== All jar files ==="
-          find /tmp/gradle-8.6 -name "*.jar" | head -20
-          mkdir -p gradle/wrapper
-          find /tmp/gradle-8.6 -name "gradle-wrapper.jar" | head -1 | \
-            xargs -I{} cp {} gradle/wrapper/gradle-wrapper.jar
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "wrapper jar not found by name, copying first jar found"
-            find /tmp/gradle-8.6/lib -name "*.jar" | head -1 | \
-              xargs -I{} cp {} gradle/wrapper/gradle-wrapper.jar
-          fi
-          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-all.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' \
-            > gradle/wrapper/gradle-wrapper.properties
-          chmod +x gradlew
-          echo "JAR size:"
-          ls -lh gradle/wrapper/gradle-wrapper.jar
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.6
 
       - name: Build APK
         run: |
-          export GRADLE_OPTS="-Xmx3g -Dorg.gradle.daemon=false"
           cd tradevibe-complete/tradevibe/app/android
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1
+          gradle assembleDebug --no-daemon --stacktrace
+        env:
+          GRADLE_OPTS: "-Xmx3g"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
