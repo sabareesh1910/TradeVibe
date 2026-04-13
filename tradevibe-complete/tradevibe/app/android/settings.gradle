@@ -1,5 +1,11 @@
 rootProject.name = 'TradeVibe'
-apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
+
+def androidDir = rootProject.projectDir
+def appDir = androidDir.parentFile
+def nodeModulesDir = new File(appDir, 'node_modules')
+
+apply from: new File(nodeModulesDir, '@react-native-community/cli-platform-android/native_modules.gradle')
 applyNativeModulesSettingsGradle(settings)
+
 include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
+includeBuild(new File(nodeModulesDir, '@react-native/gradle-plugin'))
