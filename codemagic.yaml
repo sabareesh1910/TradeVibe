@@ -1,41 +1,19 @@
-name: Build TradeVibe APK
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: Set up Java
-        uses: actions/setup-java@v3
-        with:
-          java-version: 17
-          distribution: temurin
-
+workflows:
+  android-debug:
+    name: TradeVibe Android Debug
+    max_build_duration: 60
+    environment:
+      node: 20
+      java: 17
+    scripts:
       - name: Install dependencies
-        run: |
+        script: |
           cd tradevibe-complete/tradevibe/app
           npm install
 
-      - name: Setup Gradle wrapper
-        run: |
-          APP=$GITHUB_WORKSPACE/tradevibe-complete/tradevibe/app
-          mkdir -p $APP/android/gradle/wrapper
-          curl -L https://services.gradle.org/distributions/gradle-8.6-bin.zip \
-            -o /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /tmp/gradle-dist/
-          cp /tmp/gradle-dist/gradle-8.6/lib/gradle-wrapper.jar \
-            $APP/android/gradle/wrapper/gradle-wrapper.jar
+      - name: Fix gradle-wrapper.properties
+        script: |
+          APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
           printf '%s\n' \
             'distributionBase=GRADLE_USER_HOME' \
             'distributionPath=wrapper/dists' \
@@ -43,15 +21,25 @@ jobs:
             'zipStoreBase=GRADLE_USER_HOME' \
             'zipStorePath=wrapper/dists' \
             > $APP/android/gradle/wrapper/gradle-wrapper.properties
-          chmod +x $APP/android/gradlew
 
-      - name: Build APK
-        run: |
-          cd tradevibe-complete/tradevibe/app/android
-          ./gradlew assembleDebug --no-daemon
+      - name: Install Gradle 8.6
+        script: |
+          curl -L https://services.gradle.org/distributions/gradle-8.6-bin.zip \
+            -o /tmp/gradle-8.6-bin.zip
+          unzip -q /tmp/gradle-8.6-bin.zip -d /tmp/
+          export PATH=/tmp/gradle-8.6/bin:$PATH
+          gradle --version
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: app-debug
-          path: tradevibe-complete/tradevibe/app/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Build Android APK
+        script: |
+          export PATH=/tmp/gradle-8.6/bin:$PATH
+          APP=$CM_BUILD_DIR/tradevibe-complete/tradevibe/app
+          cd $APP/android
+          gradle assembleDebug \
+            --no-daemon \
+            --stacktrace \
+            --info \
+            2>&1 | head -150
+
+    artifacts:
+      - tradevibe-complete/tradevibe/app/android/app/build/outputs/apk/debug/*.apk
